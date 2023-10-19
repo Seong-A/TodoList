@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -33,6 +34,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     private Date selectedDate;
     private TextView monthAndWeekText;
     private ImageView imageView;
+    private Button itemActionButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +126,16 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
                 taskItem.setChecked(checkBox.isChecked());
             }
         });
+
+        // 투두리스트 아이템 롱클릭 리스너 설정 (삭제 기능 추가)
+        listViewTasks.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                // 아이템 롱클릭 이벤트 처리
+                removeTask(position);
+                return true;
+            }
+        });
     }
 
     public void updateSelectedDate(Date newSelectedDate) {
@@ -153,7 +165,6 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
 
         String updatedMonthAndWeek = getMonthAndWeek(selectedDate);
         monthAndWeekText.setText(updatedMonthAndWeek);
-
     }
 
     // 날짜를 기반으로 주간 날짜 목록 생성
@@ -162,8 +173,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(selectedDate);
 
-        calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY); // 선택한 날짜의 주의 시작을 일요일로 설정
-
+        calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY); // 선택한
         // 주간 날짜 목록 생성
         for (int i = 0; i < 7; i++) {
             weeklyDates.add(calendar.getTime());
@@ -171,6 +181,24 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         }
 
         return weeklyDates;
+    }
+
+    public void deleteTask(View view) {
+        // 이벤트가 발생한 버튼의 부모 뷰 (list_item)을 찾아서 그 뷰의 위치(position)를 얻습니다.
+        View parentView = (View) view.getParent();
+        int position = listViewTasks.getPositionForView(parentView);
+
+        if (position != ListView.INVALID_POSITION) {
+            removeTask(position);
+        }
+    }
+    // 투두리스트 아이템을 삭제하는 메서드
+    private void removeTask(int position) {
+        if (position >= 0 && position < taskList.size()) {
+            taskList.remove(position);
+            tasksAdapter.notifyDataSetChanged();
+            Toast.makeText(this, "투두리스트 항목이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public class TaskItem {
@@ -200,5 +228,4 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         }
     }
 }
-
 
