@@ -43,8 +43,50 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+    <!-- 버튼과 텍스트뷰를 감싸는 레이아웃 추가 -->
+    <LinearLayout
+        android:id="@+id/weekControlLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="2dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        android:padding="12dp">
 
+    <!-- "이전 주" 버튼 -->
+    <ImageView
+        android:id="@+id/prevWeekButton"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:scaleType="centerInside"
+        android:layout_marginStart="16dp"
+        android:src="@drawable/previous_week_image" />
 
+    <!-- 현재 주를 나타내는 텍스트뷰 -->
+    <TextView
+        android:id="@+id/monthAndWeekText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:gravity="center_horizontal"
+        android:textSize="16sp"
+        android:layout_marginTop="2dp"
+        android:textColor="@android:color/black" />
+
+    <!-- "다음 주" 버튼 -->
+    <ImageView
+        android:id="@+id/nextWeekButton"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:scaleType="centerInside"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/next_week_image"
+        android:contentDescription="Next Week" />
+    </LinearLayout>
+
+    <!-- 요일을 표시할 레이아웃 추가 -->
     <LinearLayout
         android:id="@+id/weekDayLayout"
         android:layout_width="0dp"
@@ -52,9 +94,8 @@
         android:orientation="horizontal"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
-        android:padding="8dp"
-        android:layout_marginTop="5dp">
+        app:layout_constraintTop_toBottomOf="@id/weekControlLayout"
+        android:padding="5dp">
 
         <!-- 각 요일 표시 -->
         <TextView
@@ -163,7 +204,7 @@
         android:layout_height="52dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginTop="328dp"
+        android:layout_marginTop="280dp"
         android:background="@drawable/button_background"
         android:text="+"
         android:textColor="@android:color/white"

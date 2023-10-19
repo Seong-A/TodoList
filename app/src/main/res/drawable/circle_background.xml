@@ -1,0 +1,4 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#03DAC5"/> <!-- 여기에 원하는 배경 색상을 지정합니다 -->
+    <corners android:radius="1000dp" /> <!-- 원 모양의 동그라미로 만들려면 반지름 값을 크게 설정 -->
+</shape>

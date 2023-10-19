@@ -1,5 +1,6 @@
 package com.example.todolist;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -7,7 +8,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -27,7 +30,9 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     private ArrayList<TaskItem> taskList;
     private RecyclerView recyclerView;
     private WeeklyCalendarAdapter adapter;
-
+    private Date selectedDate;
+    private TextView monthAndWeekText;
+    private ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +43,8 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         buttonAdd = findViewById(R.id.buttonAdd);
         listViewTasks = findViewById(R.id.listViewTasks);
         recyclerView = findViewById(R.id.weeklyCalendarRecyclerView);
+        monthAndWeekText = findViewById(R.id.monthAndWeekText);
+        imageView = findViewById(R.id.imageView);
 
         taskList = new ArrayList<>();
         tasksAdapter = new ArrayAdapter<>(this, R.layout.list_item, R.id.taskText, taskList);
@@ -46,15 +53,53 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         GridLayoutManager layoutManager = new GridLayoutManager(this, 7);
         recyclerView.setLayoutManager(layoutManager);
 
-        Date selectedDate = (Date) getIntent().getSerializableExtra("selectedDate");
+        // 이미지뷰 클릭 이벤트 핸들러
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // MainActivity로 이동하는 Intent 생성
+                Intent intent = new Intent(WeeklyCalendarActivity.this, MainActivity.class);
 
-        // 주간 날짜 목록 생성
-        List<Date> weeklyDates = generateWeeklyDates(selectedDate);
+                // 액티비티 시작
+                startActivity(intent);
+            }
+        });
 
-        // 어댑터 초기화 (주간 달력 아이템을 표시하기 위해)
-        adapter = new WeeklyCalendarAdapter(weeklyDates);
-        recyclerView.setAdapter(adapter);
+        // 월간 달력에서 선택한 날짜 가져오기
+        selectedDate = (Date) getIntent().getSerializableExtra("selectedDate");
 
+        // 주간 날짜 목록 생성 및 주간 달력 초기화
+        updateWeeklyCalendar(selectedDate);
+
+        // 지난 주 버튼 클릭 리스너 설정
+        ImageView prevWeekButton = findViewById(R.id.prevWeekButton);
+        prevWeekButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 현재 날짜를 7일 전으로 설정하여 업데이트
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(selectedDate);
+                calendar.add(Calendar.DAY_OF_YEAR, -7);
+                selectedDate = calendar.getTime();
+                updateWeeklyCalendar(selectedDate);
+            }
+        });
+
+        // "다음 주" 버튼 클릭 리스너 설정
+        ImageView nextWeekButton = findViewById(R.id.nextWeekButton);
+        nextWeekButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 현재 날짜를 7일 후로 설정하여 업데이트
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(selectedDate);
+                calendar.add(Calendar.DAY_OF_YEAR, 7);
+                selectedDate = calendar.getTime();
+                updateWeeklyCalendar(selectedDate);
+            }
+        });
+
+        // 투두리스트 추가
         buttonAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -69,7 +114,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
             }
         });
 
-
+        // 투두리스트 목록
         listViewTasks.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -81,41 +126,52 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         });
     }
 
-    //추가
-    private void updateWeeklyCalendar(Date selectedDate) {
-        List<Date> weeklyDates = generateWeeklyDates(selectedDate);
-        adapter = new WeeklyCalendarAdapter(weeklyDates);
-        recyclerView.setAdapter(adapter);
+    public void updateSelectedDate(Date newSelectedDate) {
+        selectedDate = newSelectedDate;
+        updateWeeklyCalendar(selectedDate);
     }
 
+    private String getMonthAndWeek(Date selectedDate) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(selectedDate);
+
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH) + 1; // 월은 0부터 시작하므로 1을 더해줍니다.
+        int week = calendar.get(Calendar.WEEK_OF_MONTH);
+
+        return year + "년 " + month + "월 " + week + "째 주";
+    }
+
+    // 주간 달력 업데이트
+    private void updateWeeklyCalendar(Date selectedDate) {
+        List<Date> weeklyDates = generateWeeklyDates(selectedDate);
+
+        // Adapter 초기화 및 주간 데이터 설정
+        adapter = new WeeklyCalendarAdapter(this, weeklyDates, selectedDate);
+        adapter.updateData(weeklyDates, selectedDate);
+        recyclerView.setAdapter(adapter);
+
+        String updatedMonthAndWeek = getMonthAndWeek(selectedDate);
+        monthAndWeekText.setText(updatedMonthAndWeek);
+
+    }
+
+    // 날짜를 기반으로 주간 날짜 목록 생성
     public static List<Date> generateWeeklyDates(Date selectedDate) {
         List<Date> weeklyDates = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(selectedDate);
 
-        // 선택한 날짜의 요일 (일요일: 1, 월요일: 2, ..., 토요일: 7)
-        int selectedDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY); // 선택한 날짜의 주의 시작을 일요일로 설정
 
-        // 주의 시작을 일요일로 설정 (이를 월요일로 변경하려면 -1을 더합니다)
-        calendar.add(Calendar.DATE, 1 - selectedDayOfWeek);
-
-        // 주간 날짜 목록 생성 (예: 일요일부터 토요일까지)
+        // 주간 날짜 목록 생성
         for (int i = 0; i < 7; i++) {
             weeklyDates.add(calendar.getTime());
-            calendar.add(Calendar.DATE, 1); // 다음 날짜로 이동
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
         }
 
         return weeklyDates;
     }
-
-    //추가
-    private static Date getDateFromCalendar(int year, int month, int dayOfMonth) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month, dayOfMonth);
-        return calendar.getTime();
-    }
-
-
 
     public class TaskItem {
         private String taskText;
@@ -144,4 +200,5 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         }
     }
 }
+
 
