@@ -46,6 +46,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     private ImageView imageView;
     private Button itemActionButton;
     private Map<String, ArrayList<TaskItem>> taskListMap = new HashMap<>();
+    private Date currentDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +84,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
 
         // 주간 날짜 목록 생성 및 주간 달력 초기화
         updateWeeklyCalendar(selectedDate);
-
+        currentDate = selectedDate;
         taskListMap = new HashMap<>();
 
         // "다음 주" 버튼 클릭 리스너 설정
@@ -134,10 +135,11 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
                 String task = editTextTask.getText().toString();
                 if (!task.isEmpty()) {
                     // 선택된 날짜에 대한 ArrayList가 초기화되어 있는지 확인
-                    ArrayList<TaskItem> taskListForDate = taskListMap.get(getDateString(selectedDate));
+                    String dateString = getDateString(currentDate);
+                    ArrayList<TaskItem> taskListForDate = taskListMap.get(dateString);
                     if (taskListForDate == null) {
                         taskListForDate = new ArrayList<>();
-                        taskListMap.put(getDateString(selectedDate), taskListForDate);
+                        taskListMap.put(dateString, taskListForDate);
                     }
 
                     // 새 작업을 추가
@@ -154,7 +156,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
             }
         });
 
-        // 투두리스트 목록
+        // 투두리스트 목록 클릭 이벤트 핸들러
         listViewTasks.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -162,10 +164,18 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
                 CheckBox checkBox = view.findViewById(R.id.checkBox);
                 TaskItem taskItem = taskList.get(position);
                 taskItem.setChecked(checkBox.isChecked());
+
+                // 선택된 날짜의 작업 목록을 업데이트
+                String dateString = getDateString(currentDate);
+                ArrayList<TaskItem> taskListForDate = taskListMap.get(dateString);
+                if (taskListForDate != null) {
+                    taskListForDate.set(position, taskItem);
+                }
             }
         });
 
-        // 투두리스트 아이템 롱클릭 리스너 설정 (삭제 기능 추가)
+
+        // 투두리스트 아이템 롱클릭 이벤트 핸들러 (삭제 기능 추가)
         listViewTasks.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
@@ -237,9 +247,10 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     }
 
 
+    // 현재 선택된 날짜를 업데이트하는 메서드
     public void updateSelectedDate(Date newSelectedDate) {
-        selectedDate = newSelectedDate;
-        updateWeeklyCalendar(selectedDate);
+        currentDate = newSelectedDate;
+        updateWeeklyCalendar(currentDate);
     }
 
     private String getMonthAndWeek(Date selectedDate) {
@@ -253,27 +264,26 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         return year + "년 " + month + "월 " + week + "째 주";
     }
 
-    //주간 달력 업데이트
-    private void updateWeeklyCalendar(Date selectedDate) {
-        List<Date> weeklyDates = generateWeeklyDates(selectedDate);
-
-        // Local taskList for the current selected date
-        ArrayList<TaskItem> taskListForDate = taskListMap.get(getDateString(selectedDate));
-        if (taskListForDate == null) {
-            taskListForDate = new ArrayList<>();
-        }
+    // 주간 달력 업데이트 메서드
+    private void updateWeeklyCalendar(Date currentDate) {
+        List<Date> weeklyDates = generateWeeklyDates(currentDate);
 
         // Adapter 초기화 및 주간 데이터 설정
-        adapter = new WeeklyCalendarAdapter(this, weeklyDates, selectedDate);
-        adapter.updateData(weeklyDates, selectedDate);
+        adapter = new WeeklyCalendarAdapter(this, weeklyDates, currentDate);
         recyclerView.setAdapter(adapter);
 
         // tasksAdapter 업데이트
         tasksAdapter.clear();
-        tasksAdapter.addAll(taskListForDate);
+
+        // 현재 선택한 날짜의 할 일 목록을 사용하도록 수정
+        String dateString = getDateString(currentDate);
+        ArrayList<TaskItem> taskListForDate = taskListMap.get(dateString);
+        if (taskListForDate != null) {
+            tasksAdapter.addAll(taskListForDate);
+        }
+
         tasksAdapter.notifyDataSetChanged();
     }
-
 
 
     // 날짜를 기반으로 주간 날짜 목록 생성
@@ -305,11 +315,42 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     // 투두리스트 아이템을 삭제하는 메서드
     private void removeTask(int position) {
         if (position >= 0 && position < taskList.size()) {
-            taskList.remove(position);
+            // 삭제된 항목을 따로 저장
+            TaskItem removedTask = taskList.remove(position);
+
+            // 해당 날짜의 작업 목록을 업데이트
+            String dateString = getDateString(currentDate);
+            ArrayList<TaskItem> taskListForDate = taskListMap.get(dateString);
+            if (taskListForDate != null) {
+                taskListForDate.remove(removedTask);
+            }
+
             tasksAdapter.notifyDataSetChanged();
             Toast.makeText(this, "투두리스트 항목이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+
+            // 삭제한 항목을 SharedPreferences에 저장
+            saveDeletedTaskToSharedPreferences(removedTask);
         }
     }
+
+
+    private void saveDeletedTaskToSharedPreferences(TaskItem taskItem) {
+        // 삭제한 항목을 JSON 문자열로 변환
+        Gson gson = new Gson();
+        String taskJson = gson.toJson(taskItem);
+
+        // SharedPreferences에 삭제한 항목 저장
+        SharedPreferences preferences = getSharedPreferences("DeletedTasksPreferences", MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        // 새로운 키 생성 (사용자마다 다른 키를 사용하도록 할 수 있습니다)
+        String key = "task_" + System.currentTimeMillis();
+
+        editor.putString(key, taskJson);
+        editor.apply();
+    }
+
+
 
 
     public class TaskItem {
