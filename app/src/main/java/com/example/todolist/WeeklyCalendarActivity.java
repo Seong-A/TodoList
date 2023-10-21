@@ -277,6 +277,8 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         adapter = new WeeklyCalendarAdapter(this, weeklyDates, currentDate);
         recyclerView.setAdapter(adapter);
 
+        monthAndWeekText.setText(getMonthAndWeek(currentDate));
+
         // tasksAdapter 업데이트
         tasksAdapter.clear();
 
