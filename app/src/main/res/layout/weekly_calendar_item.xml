@@ -6,7 +6,7 @@
     android:orientation="horizontal"
     android:padding="8dp">
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -15,7 +15,7 @@
         android:textSize="14sp"
         android:textColor="@android:color/black"
         android:layout_margin="2dp"
-    />
+        />
 
     <ImageView
         android:id="@+id/backgroundCircle"
@@ -24,5 +24,6 @@
         android:layout_centerInParent="true"
         android:visibility="invisible"
         android:background="@drawable/circle_background" />
+
 
 </LinearLayout>
