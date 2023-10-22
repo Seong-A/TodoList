@@ -1,5 +1,4 @@
 package com.example.todolist;
-
 public class TaskItem {
     private long id;
     private String taskText;
@@ -17,6 +16,10 @@ public class TaskItem {
 
     public String getTaskText() {
         return taskText;
+    }
+
+    public void setTaskText(String taskText) {
+        this.taskText = taskText;
     }
 
     public boolean isChecked() {

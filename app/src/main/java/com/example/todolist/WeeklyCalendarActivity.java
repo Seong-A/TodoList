@@ -1,6 +1,7 @@
 package com.example.todolist;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -21,6 +22,7 @@ import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -340,6 +342,61 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         }
     }
 
+    public void editTask(View view) {
+        // 클릭된 항목의 위치(position)를 결정하기 위해 부모 뷰 (list_item)를 찾습니다.
+        View parentView = (View) view.getParent();
+        final int position = listViewTasks.getPositionForView(parentView);
+
+        if (position != ListView.INVALID_POSITION) {
+            // 선택된 작업 항목을 가져옵니다.
+            final TaskItem taskItem = taskList.get(position);
+
+            // 작업을 편집할 수 있는 다이얼로그를 표시하기 위해 AlertDialog를 생성합니다.
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("내용 수정");
+
+            // 다이얼로그에 에디트텍스트를 추가합니다.
+            final EditText editText = new EditText(this);
+            editText.setText(taskItem.getTaskText());
+            builder.setView(editText);
+
+            builder.setPositiveButton("저장", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // 에디트텍스트에서 사용자가 입력한 내용을 가져옵니다.
+                    String editedText = editText.getText().toString();
+
+                    // 편집한 내용으로 작업 항목을 업데이트합니다.
+                    taskItem.setTaskText(editedText);
+
+                    // tasksAdapter를 업데이트하여 변경된 내용을 반영합니다.
+                    tasksAdapter.notifyDataSetChanged();
+
+                    // 해당 날짜의 작업 목록을 업데이트
+                    String dateString = getDateString(currentDate);
+                    ArrayList<TaskItem> taskListForDate = taskListMap.get(dateString);
+                    if (taskListForDate != null) {
+                        taskListForDate.set(position, taskItem);
+                    }
+                    // 투두리스트 항목이 수정되었습니다 토스트 메시지 표시
+                    Toast.makeText(WeeklyCalendarActivity.this, "투두리스트 항목이 수정되었습니다.", Toast.LENGTH_SHORT).show();
+
+                    // 다이얼로그를 닫습니다.
+                    dialog.dismiss();
+                }
+            });
+
+            builder.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // 다이얼로그를 닫습니다.
+                    dialog.dismiss();
+                }
+            });
+
+            builder.create().show();
+        }
+    }
 
     private void saveDeletedTaskToSharedPreferences(TaskItem taskItem) {
         // 삭제한 항목을 JSON 문자열로 변환

@@ -22,18 +22,31 @@
         android:textColor="@color/black"
         android:textStyle="normal" />
 
-    <!-- 우측에 버튼 추가 -->
     <Button
         android:id="@+id/itemActionButton"
-        android:layout_width="wrap_content"
+        android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
-        android:layout_marginEnd="8dp"
         android:onClick="deleteTask"
+        android:layout_marginLeft="10dp"
+        android:text="X"
+        android:textColor="@android:color/darker_gray" />
+
+    <Button
+        android:id="@+id/anotherItemActionButton"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_toStartOf="@+id/itemActionButton"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="1dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:onClick="editTask"
         android:text="..."
-        android:textColor="@android:color/darker_gray"/>
+        android:textColor="@android:color/darker_gray" />
+
 
 </RelativeLayout>
