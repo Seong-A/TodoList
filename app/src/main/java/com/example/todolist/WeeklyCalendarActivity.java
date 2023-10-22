@@ -16,6 +16,8 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.util.Locale;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,7 +39,6 @@ import java.lang.reflect.Type;
 import java.util.Locale;
 import java.util.Map;
 
-
 public class WeeklyCalendarActivity extends AppCompatActivity {
 
     private EditText editTextTask;
@@ -51,8 +52,11 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     private TextView monthAndWeekText;
     private ImageView imageView;
     private Button itemActionButton;
-    // 예전의 taskListMap 대신 날짜별로 별도의 ArrayList를 가지는 Map을 사용
+
+    // taskListMap은 날짜별로 작업 목록을 저장하기 위한 Map입니다.
     private Map<String, ArrayList<TaskItem>> taskListMap = new HashMap<>();
+    private Map<String, Map<Long, Boolean>> checkboxStatusMap = new HashMap<>();
+
     private Date currentDate;
 
     @Override
@@ -92,7 +96,6 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         // 주간 날짜 목록 생성 및 주간 달력 초기화
         updateWeeklyCalendar(selectedDate);
         currentDate = selectedDate;
-        taskListMap = new HashMap<>();
 
         // "다음 주" 버튼 클릭 리스너 설정
         ImageView nextWeekButton = findViewById(R.id.nextWeekButton);
@@ -100,10 +103,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // 다음 주로 업데이트하기 전에 작업 저장
-                saveTasksToSharedPreferences(getDateString(selectedDate));
-
-                // 선택한 날짜에 대한 작업 로드
-                loadTasksFromSharedPreferences(getDateString(selectedDate));
+                saveTasksToSharedPreferences(getDateString(currentDate));
 
                 // 다음 주에 대한 주간 캘린더 업데이트
                 Calendar calendar = Calendar.getInstance();
@@ -112,16 +112,18 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
                 selectedDate = calendar.getTime();
                 updateWeeklyCalendar(selectedDate);
 
+                // 선택한 날짜에 대한 작업 로드
+                loadTasksFromSharedPreferences(getDateString(selectedDate));
             }
         });
-
 
         // "이전 주" 버튼 클릭 리스너 설정
         ImageView prevWeekButton = findViewById(R.id.prevWeekButton);
         prevWeekButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                saveTasksToSharedPreferences(getDateString(selectedDate));
+                // 이전 주로 이동하기 전에 작업 저장
+                saveTasksToSharedPreferences(getDateString(currentDate));
 
                 // 이전 주에 대한 주간 캘린더 업데이트
                 Calendar calendar = Calendar.getInstance();
@@ -134,7 +136,6 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
                 loadTasksFromSharedPreferences(getDateString(selectedDate));
             }
         });
-
         // 투두리스트 추가
         buttonAdd.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -164,9 +165,8 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
             }
         });
 
-
-// 투두리스트 목록 클릭 이벤트 핸들러
-// 작업 목록 항목 클릭 리스너
+    // 투두리스트 목록 클릭 이벤트 핸들러
+        // 작업 목록 항목 클릭 리스너
         listViewTasks.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -178,8 +178,6 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
             }
         });
 
-
-
         // 투두리스트 아이템 롱클릭 이벤트 핸들러 (삭제 기능 추가)
         listViewTasks.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
@@ -188,54 +186,55 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
                 removeTask(position);
                 return true;
             }
-        });
+    });
+}
 
-
-
+    private String getDateString(Date date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
+        return dateFormat.format(date);
     }
 
-    // 체크박스 상태 저장 메서드
+
+    // 데이터를 저장하는 메서드
     private void saveTasksToSharedPreferences(String dateString) {
-        String key = "tasks_" + dateString;
+        String key = "tasks_" + dateString; // SharedPreferences 키를 생성
         ArrayList<TaskItem> tasksForDate = taskListMap.get(dateString);
 
         if (tasksForDate != null) {
-            // TaskItem 객체의 ID를 사용하여 체크박스 상태 저장
-            List<Long> checkedItemIds = new ArrayList<>();
+            Map<Long, Boolean> taskStatusMap = new HashMap<>();
+
             for (TaskItem taskItem : tasksForDate) {
-                if (taskItem.isChecked()) {
-                    checkedItemIds.add(taskItem.getId());
-                }
+                taskStatusMap.put(taskItem.getId(), taskItem.isChecked());
             }
 
-            // 체크된 항목의 ID를 JSON 배열로 저장
             Gson gson = new Gson();
-            String checkedItemIdsJson = gson.toJson(checkedItemIds);
+            String taskStatusJson = gson.toJson(taskStatusMap);
 
             SharedPreferences preferences = getSharedPreferences("TaskPreferences", MODE_PRIVATE);
             SharedPreferences.Editor editor = preferences.edit();
-            editor.putString(key, checkedItemIdsJson);
+            editor.putString(key, taskStatusJson);
             editor.apply();
         }
     }
 
 
-    // 체크박스 상태 복원 메서드
+    // 데이터를 불러오는 메서드
     private void loadTasksFromSharedPreferences(String dateString) {
-        String key = "tasks_" + dateString;
+        String key = "tasks_" + dateString; // SharedPreferences 키를 생성
         SharedPreferences preferences = getSharedPreferences("TaskPreferences", MODE_PRIVATE);
-        String checkedItemIdsJson = preferences.getString(key, "");
+        String taskStatusJson = preferences.getString(key, "");
 
         Gson gson = new Gson();
-        Type type = new TypeToken<List<Long>>() {}.getType();
-        List<Long> checkedItemIds = gson.fromJson(checkedItemIdsJson, type);
+        Type type = new TypeToken<Map<Long, Boolean>>() {}.getType();
+        Map<Long, Boolean> taskStatusMap = gson.fromJson(taskStatusJson, type);
 
         ArrayList<TaskItem> tasksForDate = taskListMap.get(dateString);
 
         if (tasksForDate != null) {
-            // 저장된 체크박스 상태를 복원
             for (TaskItem taskItem : tasksForDate) {
-                taskItem.setChecked(checkedItemIds.contains(taskItem.getId()));
+                if (taskStatusMap != null && taskStatusMap.containsKey(taskItem.getId())) {
+                    taskItem.setChecked(taskStatusMap.get(taskItem.getId()));
+                }
             }
 
             // tasksAdapter 업데이트
@@ -243,14 +242,6 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
             tasksAdapter.addAll(tasksForDate);
             tasksAdapter.notifyDataSetChanged();
         }
-    }
-
-
-
-
-    private String getDateString(Date date) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
-        return dateFormat.format(date);
     }
 
 
@@ -271,7 +262,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         return year + "년 " + month + "월 " + week + "째 주";
     }
 
-    // 주간 달력 업데이트 메서드
+    // 주간 캘린더 업데이트 메서드에서 선택한 날짜의 체크박스 상태 복원
     private void updateWeeklyCalendar(Date currentDate) {
         List<Date> weeklyDates = generateWeeklyDates(currentDate);
         adapter = new WeeklyCalendarAdapter(this, weeklyDates, currentDate);
@@ -285,12 +276,20 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         // 현재 선택한 날짜의 할 일 목록을 사용하도록 수정
         String dateString = getDateString(currentDate);
         ArrayList<TaskItem> taskListForDate = taskListMap.get(dateString);
+
         if (taskListForDate != null) {
             tasksAdapter.addAll(taskListForDate);
+            // 선택한 날짜의 체크박스 상태 복원
+            loadTasksFromSharedPreferences(dateString);
+        } else {
+            // 선택한 날짜의 작업 목록이 없는 경우, 새로운 빈 ArrayList를 생성
+            taskListForDate = new ArrayList<>();
+            taskListMap.put(dateString, taskListForDate);
         }
 
         tasksAdapter.notifyDataSetChanged();
     }
+
 
 
 
@@ -386,14 +385,13 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     taskItem.setChecked(isChecked);
+                    // 체크박스 상태가 변경될 때마다 저장
+                    saveTasksToSharedPreferences(getDateString(currentDate));
                 }
             });
+
 
             return convertView;
         }
     }
 }
-
-
-
-
