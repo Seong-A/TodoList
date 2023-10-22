@@ -1,17 +1,21 @@
 package com.example.todolist;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CalendarView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -58,7 +62,6 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     // taskListMap은 날짜별로 작업 목록을 저장하기 위한 Map입니다.
     private Map<String, ArrayList<TaskItem>> taskListMap = new HashMap<>();
     private Map<String, Map<Long, Boolean>> checkboxStatusMap = new HashMap<>();
-
     private Date currentDate;
 
     @Override
@@ -197,7 +200,6 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     }
 
 
-    // 데이터를 저장하는 메서드
     private void saveTasksToSharedPreferences(String dateString) {
         String key = "tasks_" + dateString; // SharedPreferences 키를 생성
         ArrayList<TaskItem> tasksForDate = taskListMap.get(dateString);
@@ -220,7 +222,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
     }
 
 
-    // 데이터를 불러오는 메서드
+
     private void loadTasksFromSharedPreferences(String dateString) {
         String key = "tasks_" + dateString; // SharedPreferences 키를 생성
         SharedPreferences preferences = getSharedPreferences("TaskPreferences", MODE_PRIVATE);
@@ -233,10 +235,14 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
         ArrayList<TaskItem> tasksForDate = taskListMap.get(dateString);
 
         if (tasksForDate != null) {
-            for (TaskItem taskItem : tasksForDate) {
+            tasksForDate.clear(); // 이전 데이터를 제거합니다.
+
+            for (TaskItem taskItem : taskList) {
                 if (taskStatusMap != null && taskStatusMap.containsKey(taskItem.getId())) {
                     taskItem.setChecked(taskStatusMap.get(taskItem.getId()));
                 }
+
+                tasksForDate.add(taskItem); // 업데이트된 항목을 추가합니다.
             }
 
             // tasksAdapter 업데이트
@@ -245,6 +251,7 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
             tasksAdapter.notifyDataSetChanged();
         }
     }
+
 
 
     // 현재 선택된 날짜를 업데이트하는 메서드
@@ -397,6 +404,73 @@ public class WeeklyCalendarActivity extends AppCompatActivity {
             builder.create().show();
         }
     }
+    public void passTask(View view) {
+        // 이벤트가 발생한 버튼의 부모 뷰 (list_item)를 찾아서 그 뷰의 위치(position)를 얻습니다.
+        View parentView = (View) view.getParent();
+        final int position = listViewTasks.getPositionForView(parentView);
+
+        if (position != ListView.INVALID_POSITION) {
+            // 선택한 작업 항목을 가져옵니다.
+            final TaskItem taskItem = taskList.get(position);
+
+            // DatePicker 다이얼로그를 생성하여 날짜 선택을 가능하게 합니다.
+            DatePickerDialog datePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+                @Override
+                public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                    // 사용자가 선택한 날짜로 Calendar 객체를 생성합니다.
+                    Calendar newDateCalendar = Calendar.getInstance();
+                    newDateCalendar.set(year, month, dayOfMonth);
+
+                    // 선택한 날짜에 해당하는 목록을 확인합니다.
+                    String newDateString = getDateString(newDateCalendar.getTime());
+                    ArrayList<TaskItem> newTaskList = taskListMap.get(newDateString);
+                    if (newTaskList == null) {
+                        newTaskList = new ArrayList<>();
+                        taskListMap.put(newDateString, newTaskList);
+                    }
+
+                    // 이동한 항목을 현재 날짜의 목록에서 삭제합니다.
+                    removeTask2(position);
+
+                    // 이동한 항목을 선택한 날짜의 목록으로 추가합니다.
+                    newTaskList.add(taskItem);
+
+                    // tasksAdapter를 업데이트하여 변경된 내용을 반영합니다.
+                    tasksAdapter.notifyDataSetChanged();
+
+                    // 토스트 메시지로 이동 완료 메시지를 표시합니다.
+                    Toast.makeText(WeeklyCalendarActivity.this, "투두리스트 항목을 이동했습니다.", Toast.LENGTH_SHORT).show();
+
+                    // 이동한 항목을 SharedPreferences에 저장 (이동한 날짜와 현재 날짜에 모두 적용)
+                    saveTasksToSharedPreferences(newDateString);
+                    saveTasksToSharedPreferences(getDateString(currentDate));
+                }
+            }, Calendar.getInstance().get(Calendar.YEAR), Calendar.getInstance().get(Calendar.MONTH), Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
+            datePickerDialog.show();
+        }
+    }
+
+    // 투두리스트 아이템을 삭제하는 메서드
+    private void removeTask2(int position) {
+        if (position >= 0 && position < taskList.size()) {
+            // 삭제된 항목을 따로 저장
+            TaskItem removedTask = taskList.remove(position);
+
+            // 해당 날짜의 작업 목록을 업데이트
+            String dateString = getDateString(currentDate);
+            ArrayList<TaskItem> taskListForDate = taskListMap.get(dateString);
+            if (taskListForDate != null) {
+                taskListForDate.remove(removedTask);
+            }
+            // 삭제한 항목을 SharedPreferences에 저장
+            saveDeletedTaskToSharedPreferences(removedTask);
+        }
+    }
+
+
+
+
+
 
     private void saveDeletedTaskToSharedPreferences(TaskItem taskItem) {
         // 삭제한 항목을 JSON 문자열로 변환

@@ -33,7 +33,8 @@
         android:onClick="deleteTask"
         android:layout_marginLeft="10dp"
         android:text="X"
-        android:textColor="@android:color/darker_gray" />
+        android:textColor="@android:color/darker_gray"
+        android:src="@drawable/delete"/>
 
     <Button
         android:id="@+id/anotherItemActionButton"
@@ -41,11 +42,26 @@
         android:layout_height="wrap_content"
         android:layout_toStartOf="@+id/itemActionButton"
         android:layout_centerVertical="true"
-        android:layout_marginStart="1dp"
+        android:layout_marginStart="0dp"
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:onClick="editTask"
+        android:src="@drawable/edit"
         android:text="..."
+        android:textColor="@android:color/darker_gray" />
+
+    <Button
+        android:id="@+id/passItemActionButton"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_toStartOf="@+id/anotherItemActionButton"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="0dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:onClick="passTask"
+        android:src="@drawable/pass"
+        android:text=">"
         android:textColor="@android:color/darker_gray" />
 
 
