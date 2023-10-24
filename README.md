@@ -8,5 +8,5 @@
 
 | 미루기능(날짜선택)        | 내용수정기능            | 할일삭제기능            |
 |-------------------------|-------------------------|-------------------------|
-| ![Image 4](https://github.com/Seong-A/TodoList/assets/83965377/05e1d716-bc32-497b-ab05-cfbab0ad5ad5) | ![Image 5](https://github.com/Seong-A/TodoList/assets/83965377/dc46ca2d-0d3b-4b56-b229-3b2ca5becb9c) | ![Image 6](https://github.com/Seong-A/TodoList/assets/83965377/6fbf6e5c-695e-4b98-91e9-cafb0d2f60f3) |
+| ![image](https://github.com/Seong-A/TodoList/assets/83965377/982739e3-5e3f-4383-84f7-852a6b545150) | ![Image 5](https://github.com/Seong-A/TodoList/assets/83965377/dc46ca2d-0d3b-4b56-b229-3b2ca5becb9c) | ![Image 6](https://github.com/Seong-A/TodoList/assets/83965377/6fbf6e5c-695e-4b98-91e9-cafb0d2f60f3) |
 
