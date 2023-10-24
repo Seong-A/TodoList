@@ -6,7 +6,7 @@
 |-------------------------|-------------------------|-------------------------|
 | ![Image 1](https://github.com/Seong-A/TodoList/assets/83965377/bf53f5ca-ee1a-4eb3-876a-8592a5afbd33) | ![Image 2](https://github.com/Seong-A/TodoList/assets/83965377/59a1cecc-5357-4258-9f2b-c06ec2434570) | ![Image 3](https://github.com/Seong-A/TodoList/assets/83965377/b500c2e5-60c5-4028-ae5d-18575f4e4c4b) |
 
-| 미루기능(날짜선택)        | 내용수정기능            | 할일삭제기능            |
+| 미루기기능(날짜선택)        | 내용수정기능            | 할일삭제기능            |
 |-------------------------|-------------------------|-------------------------|
 | ![image](https://github.com/Seong-A/TodoList/assets/83965377/982739e3-5e3f-4383-84f7-852a6b545150) | ![Image 5](https://github.com/Seong-A/TodoList/assets/83965377/dc46ca2d-0d3b-4b56-b229-3b2ca5becb9c) | ![Image 6](https://github.com/Seong-A/TodoList/assets/83965377/6fbf6e5c-695e-4b98-91e9-cafb0d2f60f3) |
 
